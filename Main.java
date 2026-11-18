@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 public class Main {
     private static Scanner scanner = new Scanner(System.in);
-    private static conFinanceiro controle = new conFinanceiro();
+    private static ConFinanceiro controle = new ConFinanceiro();
     private static DateTimeFormatter FORMATO_DATA =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
     

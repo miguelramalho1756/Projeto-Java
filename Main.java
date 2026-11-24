@@ -1,61 +1,43 @@
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     private static Scanner scanner = new Scanner(System.in);
-    private static conFinanceiro controle = new conFinanceiro();
-    private static DateTimeFormatter FORMATO_DATA =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    
+    private static ControleFinanceiro controle = new ControleFinanceiro();
+    private static DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     public static void main(String[] args) {
         int opcao;
         do {
             menu();
-            opcao = LerInteiro("Escolha uma opcao");
+            opcao = lerInteiro("Escolha uma opcao: ");
 
             switch (opcao) {
-                case 1: 
-                    cadastrar(); 
-                    break;
-                case 2: 
-                    listar(); 
-                    break;
-                case 3: 
-                    consultarID(); 
-                    break;
-                case 4: 
-                    alterar(); 
-                    break;
-                case 5: 
-                    excluir(); 
-                    break;
-                case 6: 
-                    filtrar(); 
-                    break;
-                case 7: 
-                    consultarPE(); 
-                    break;
-                case 8: 
-                    exibir(); 
-                    break;
-                case 0: 
-                    System.out.println("Programa encerrado."); 
-                    break;
-                default: 
-                    System.out.println("Opcao invalida. Tente novamente.");
-                    break;
-                    
+                case 1: cadastrar(); break;
+                case 2: listar(); break;
+                case 3: consultarID(); break;
+                case 4: alterar(); break;
+                case 5: excluir(); break;
+                case 6: filtrar(); break;
+                case 7: consultarPE(); break;
+                case 8: exibir(); break;
+                case 0: System.out.println("Programa encerrado."); break;
+                default: System.out.println("Opcao invalida. Tente novamente.");
             }
             System.out.println();
-        } 
-        while (opcao != 0);
+        } while (opcao != 0);
         scanner.close();
     }
+
     private static void menu() {
         System.out.println("======================================");
-        System.out.println("   CONTROLE FINANCEIRO PESSOAL");
+        System.out.println("       CONTROLE FINANCEIRO PESSOAL");
         System.out.println("======================================");
         System.out.println("1 - Cadastrar lancamento");
         System.out.println("2 - Listar lancamentos");
@@ -70,14 +52,10 @@ public class Main {
 
     private static void cadastrar() {
         System.out.println("--- CADASTRAR LANCAMENTO ---");
-        String descricao = lerDescricao();
-        BigDecimal valor = lerValor();
-        LocalDate data = lerData("Data (dd/MM/aaaa): ");
-        TipoLancamento tipo = lerTipo();
-        Categoria categoria = lerCategoria();
-
-        Lancamento novo = controle.adicionarLancamento(descricao, valor, data, tipo, categoria);
-        System.out.println("Lançamento cadastrado com sucesso! ID: " + novo.getId());
+        Lancamento novo = controle.adicionarLancamento(
+            lerDescricao(), lerValor(), lerData(), lerTipo(), lerCategoria()
+        );
+        System.out.println("Lancamento cadastrado com sucesso! ID: " + novo.getId());
     }
 
     private static void listar() {
@@ -85,22 +63,18 @@ public class Main {
         exibirLista(controle.listar());
     }
 
-    private static void consultarID(){
-        int id = LerInteiro("Digite o ID: ");
+    private static void consultarID() {
+        int id = lerInteiro("Digite o ID: ");
+        Lancamento encontrado = controle.consultarId(id);
 
-        lancamento encontrado = controle.consultarId(id);
-
-        if (encontrado == null) {
-            System.out.println("lancamento nao encontrado");
-        } else {
+        if (encontrado == null)
+            System.out.println("Lancamento nao encontrado.");
+        else
             System.out.println(encontrado);
-        }
-
     }
 
     private static void alterar() {
-        int id = LerInteiro("Digite o ID: ");
-
+        int id = lerInteiro("Digite o ID: ");
         Lancamento encontrado = controle.consultarId(id);
 
         if (encontrado == null) {
@@ -108,95 +82,128 @@ public class Main {
             return;
         }
 
-        System.out.print("Nova descricao: ");
-        encontrado.getDescricao(scanner.nextLine());
+        System.out.println("Lancamento encontrado:\n" + encontrado);
+        System.out.println("Digite os novos dados:");
 
-        System.out.print("Novo valor: ");
-        encontrado.getValor(new BigDecimal(scanner.nextLine().replace(",", ".")));
-
-        encontrado.getData(lerData());
-        encontrado.getTipo(lerTipo());
-        encontrado.getCategoria(lerCategoria());
+        encontrado.setDescricao(lerDescricao());
+        encontrado.setValor(lerValor());
+        encontrado.setData(lerData());
+        encontrado.setTipo(lerTipo());
+        encontrado.setCategoria(lerCategoria());
 
         System.out.println("Lancamento alterado com sucesso!");
     }
 
     private static void excluir() {
-        int id = LerInteiro("Digite o ID: ");
+        int id = lerInteiro("Digite o ID: ");
 
-        if (controle.excluirLancamento(id)) {
-            System.out.println("Lancamento excluido!");
-        } else {
+        if (controle.excluirLancamento(id))
+            System.out.println("Lancamento excluido com sucesso!");
+        else
             System.out.println("Lancamento nao encontrado.");
-        }
     }
 
     private static void filtrar() {
-        TipoLancamento tipo = lerTipo();
-        exibirLista(controle.filtrar(tipo));
+        System.out.println("--- FILTRAR POR TIPO ---");
+        exibirLista(controle.filtrar(lerTipo()));
     }
 
     private static void consultarPE() {
         System.out.println("--- CONSULTAR POR PERIODO ---");
-
+        System.out.println("Data inicial:");
         LocalDate inicio = lerData();
+        System.out.println("Data final:");
         LocalDate fim = lerData();
 
+        if (inicio.isAfter(fim)) {
+            System.out.println("A data inicial nao pode ser posterior a data final!");
+            return;
+        }
         exibirLista(controle.consultarPE(inicio, fim));
     }
 
     private static void exibir() {
         System.out.println("--- RESUMO FINANCEIRO ---");
-
-        System.out.println("Receitas: R$ " + controle.calcularTotalReceitas());
-        System.out.println("Despesas: R$ " + controle.calcularTotalDespesas());
-        System.out.println("Saldo: R$ " + controle.calcularSaldo());
+        System.out.println("Receitas: R$ " + controle.calcularTotalReceitas().setScale(2, RoundingMode.HALF_UP));
+        System.out.println("Despesas: R$ " + controle.calcularTotalDespesas().setScale(2, RoundingMode.HALF_UP));
+        System.out.println("Saldo: R$ " + controle.calcularSaldo().setScale(2, RoundingMode.HALF_UP));
     }
 
     private static void exibirLista(ArrayList<Lancamento> lista) {
-        if (lista.isEmpty()) {
+        if (lista.isEmpty())
             System.out.println("Nenhum lancamento encontrado.");
-        } else {
-            for (Lancamento l : lista) {
+        else
+            for (Lancamento l : lista)
                 System.out.println(l);
+    }
+
+    private static int lerInteiro(String mensagem) {
+        while (true) {
+            System.out.print(mensagem);
+            try {
+                return Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Digite um numero inteiro valido!");
             }
         }
     }
 
-    private static int LerInteiro(String mensagem) {
-        System.out.print(mensagem);
-        return Integer.parseInt(scanner.nextLine());
+    private static String lerDescricao() {
+        String descricao;
+        do {
+            System.out.print("Descricao: ");
+            descricao = scanner.nextLine().trim();
+            if (descricao.isEmpty())
+                System.out.println("A descricao nao pode ficar vazia!");
+        } while (descricao.isEmpty());
+        return descricao;
+    }
+
+    private static BigDecimal lerValor() {
+        while (true) {
+            System.out.print("Valor: R$ ");
+            try {
+                BigDecimal valor = new BigDecimal(scanner.nextLine().replace(",", "."));
+                if (valor.compareTo(BigDecimal.ZERO) > 0)
+                    return valor;
+                System.out.println("O valor deve ser maior que zero!");
+            } catch (NumberFormatException e) {
+                System.out.println("Digite um valor valido!");
+            }
+        }
     }
 
     private static LocalDate lerData() {
-        System.out.print("Data (dd/MM/aaaa): ");
-        return LocalDate.parse(scanner.nextLine(), FORMATO_DATA);
+        while (true) {
+            System.out.print("Data (dd/MM/yyyy): ");
+            try {
+                return LocalDate.parse(scanner.nextLine(), FORMATO_DATA);
+            } catch (DateTimeParseException e) {
+                System.out.println("Data invalida! Tente novamente.");
+            }
+        }
     }
 
     private static TipoLancamento lerTipo() {
-        System.out.println("1 - RECEITA");
-        System.out.println("2 - DESPESA");
-
-        int opcao = LerInteiro("Escolha o tipo: ");
-
-        if (opcao == 1) {
-            return TipoLancamento.RECEITA;
-        } else {
-            return TipoLancamento.DESPESA;
+        System.out.println("1 - RECEITA\n2 - DESPESA");
+        while (true) {
+            int opcao = lerInteiro("Escolha o tipo: ");
+            if (opcao == 1) return TipoLancamento.RECEITA;
+            if (opcao == 2) return TipoLancamento.DESPESA;
+            System.out.println("Opcao invalida!");
         }
     }
 
     private static Categoria lerCategoria() {
         Categoria[] categorias = Categoria.values();
-
-        for (int i = 0; i < categorias.length; i++) {
+        for (int i = 0; i < categorias.length; i++)
             System.out.println((i + 1) + " - " + categorias[i]);
+
+        while (true) {
+            int opcao = lerInteiro("Escolha a categoria: ");
+            if (opcao >= 1 && opcao <= categorias.length)
+                return categorias[opcao - 1];
+            System.out.println("Categoria invalida!");
         }
-
-        int opcao = LerInteiro("Escolha a categoria: ");
-
-        return categorias[opcao - 1];
     }
 }
-    
-

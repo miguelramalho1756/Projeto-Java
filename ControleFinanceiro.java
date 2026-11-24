@@ -2,12 +2,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-public class conFinanceiro {
+public class ControleFinanceiro {
 
     private final ArrayList<Lancamento> lancamentos;
     private int proximoId;
 
-    public conFinanceiro() {
+    public ControleFinanceiro() {
         lancamentos = new ArrayList<>();
         proximoId = 1;
     }
